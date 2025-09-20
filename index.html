@@ -61,10 +61,23 @@
     .status.available { color:#49d49d; font-weight:600; }
     .status.sold { color:#ff6b6b; font-weight:600; }
 
-    /* Galleries */
+    /* Galleries with visible scrollbar */
     .gallery {
       display:flex; gap:10px; overflow-x:auto; padding:8px 0;
       -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;        /* Firefox */
+      scrollbar-color: #6aa2ff #14182a;
+    }
+    .gallery::-webkit-scrollbar {
+      height: 8px;                  /* scrollbar thickness */
+    }
+    .gallery::-webkit-scrollbar-track {
+      background: #14182a;          /* scrollbar background */
+      border-radius: 4px;
+    }
+    .gallery::-webkit-scrollbar-thumb {
+      background: #6aa2ff;          /* scrollbar color */
+      border-radius: 4px;
     }
     .gallery iframe {
       width:180px; height:140px; border:none; border-radius:8px;
@@ -85,8 +98,8 @@
 <body>
   <div class="wrap">
     <div class="note">
-      📌 To view photos and videos on mobile: <br/>
-      Click on the image → swipe up inside it → select “Allow Cookies” → then refresh the page.
+      📌 Best viewed on a <strong>laptop/desktop</strong>.<br/>
+      On mobile: to view photos and videos properly, click on the image → swipe up inside it → select “Allow Cookies” → then refresh the page.
     </div>
 
     <div class="banner">
