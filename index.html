@@ -9,39 +9,37 @@
     .wrap{ max-width:900px; margin:auto; padding:12px; }
     h1{ font-size:20px; margin:12px 0; text-align:center; }
 
-    /* Cookie Overlay */
-    .cookie-overlay {
-      position:fixed; top:0; left:0; width:100%; height:100%;
-      background:rgba(0,0,0,0.85); display:flex;
-      align-items:center; justify-content:center;
-      z-index:9999;
-    }
-    .cookie-box {
-      background:#fff; color:#000; padding:20px;
-      max-width:400px; border-radius:12px;
-      text-align:center; box-shadow:0 6px 20px rgba(0,0,0,0.4);
-    }
-    .cookie-box h2 { margin:0 0 12px; font-size:18px; font-weight:700; }
-    .cookie-box p { font-size:14px; margin-bottom:16px; line-height:1.5; }
-    .cookie-box button {
-      background:#6aa2ff; color:#000; font-weight:600;
-      border:none; border-radius:6px; padding:10px 16px;
-      cursor:pointer;
+    /* Top note */
+    .note {
+      background:#222; color:#ffd27f; text-align:center;
+      font-weight:500; padding:10px; border-radius:8px; margin-bottom:14px; font-size:14px;
     }
 
     /* Urgent Banner */
     .banner {
       background: linear-gradient(135deg, #ff4d4d, #cc0000);
-      color: #fff; text-align: center;
-      padding: 20px 14px; border-radius: 12px;
-      margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.35);
+      color: #fff;
+      text-align: center;
+      padding: 20px 14px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.35);
     }
     .banner h2 {
-      margin: 0 0 10px; font-size: 22px; font-weight: 800;
-      text-transform: uppercase; letter-spacing: 1px;
+      margin: 0 0 10px;
+      font-size: 22px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
-    .banner p { margin: 8px 0; font-size: 15px; line-height: 1.5; }
-    .banner strong { color: #ffd966; }
+    .banner p {
+      margin: 8px 0;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .banner strong {
+      color: #ffd966;
+    }
 
     /* Controls */
     .controls { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
@@ -85,20 +83,12 @@
   </style>
 </head>
 <body>
-
-  <!-- Cookie Notice -->
-  <div id="cookieNotice" class="cookie-overlay">
-    <div class="cookie-box">
-      <h2>📌 Action Required</h2>
-      <p>
-        To view product photos and videos, you must <strong>accept cookies</strong> from Google Drive.<br/><br/>
-        On mobile: click the image → swipe up → select <strong>"Allow Cookies"</strong> → refresh page.
-      </p>
-      <button id="cookieBtn">I Understand</button>
-    </div>
-  </div>
-
   <div class="wrap">
+    <div class="note">
+      📌 To view photos and videos on mobile: <br/>
+      Click on the image → swipe up inside it → select “Allow Cookies” → then refresh the page.
+    </div>
+
     <div class="banner">
       <h2>🚨 Urgent Household Sale – Everything Must Go!</h2>
       <p>
@@ -163,17 +153,6 @@
 
     let allRows = [];
 
-    // Cookie notice logic
-    document.getElementById("cookieBtn").addEventListener("click", ()=>{
-      document.getElementById("cookieNotice").style.display="none";
-      localStorage.setItem("cookieAccepted","yes");
-    });
-    window.addEventListener("load", ()=>{
-      if(localStorage.getItem("cookieAccepted")==="yes"){
-        document.getElementById("cookieNotice").style.display="none";
-      }
-    });
-
     function showStatus(msg, type="info") {
       let icon = "ℹ️"; if(type==="success") icon="✅"; if(type==="error") icon="❌"; if(type==="warning") icon="⚠️";
       el.statusBox.textContent = `${icon} ${msg}`;
@@ -221,6 +200,7 @@
           <div class="status ${isAvailable?"available":"sold"}">${isAvailable?"Available":"Sold"}</div>
         `;
 
+        // Photos
         if(r[6]){
           const photos=document.createElement("div");
           photos.className="gallery";
@@ -231,6 +211,8 @@
           });
           card.appendChild(photos);
         }
+
+        // Videos
         if(r[7]){
           const videos=document.createElement("div");
           videos.className="gallery";
@@ -241,6 +223,8 @@
           });
           card.appendChild(videos);
         }
+
+        // WhatsApp button
         if(isAvailable){
           const btn=document.createElement("a");
           btn.className="btn whatsapp";
@@ -249,6 +233,7 @@
           btn.textContent="Contact on WhatsApp";
           card.appendChild(btn);
         }
+
         el.cards.appendChild(card);
       });
     }
