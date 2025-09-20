@@ -18,28 +18,13 @@
     /* Urgent Banner */
     .banner {
       background: linear-gradient(135deg, #ff4d4d, #cc0000);
-      color: #fff;
-      text-align: center;
-      padding: 20px 14px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.35);
+      color: #fff; text-align: center;
+      padding: 20px 14px; border-radius: 12px;
+      margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.35);
     }
-    .banner h2 {
-      margin: 0 0 10px;
-      font-size: 22px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .banner p {
-      margin: 8px 0;
-      font-size: 15px;
-      line-height: 1.5;
-    }
-    .banner strong {
-      color: #ffd966;
-    }
+    .banner h2 { margin:0 0 10px; font-size:22px; font-weight:800; text-transform:uppercase; letter-spacing:1px; }
+    .banner p { margin:8px 0; font-size:15px; line-height:1.5; }
+    .banner strong { color: #ffd966; }
 
     /* Controls */
     .controls { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
@@ -51,44 +36,40 @@
     .btn.whatsapp{ background:#25D366; color:#fff; width:100%; text-align:center; margin-top:8px; }
 
     /* Cards */
-    .card {
-      background:#14182a; border:1px solid #333; border-radius:10px;
-      padding:12px; margin-bottom:16px;
-    }
+    .card { background:#14182a; border:1px solid #333; border-radius:10px;
+      padding:12px; margin-bottom:16px; }
     .card h2 { margin:0 0 6px; font-size:16px; }
     .meta { font-size:13px; color:#aaa; margin-bottom:8px; }
     .price { font-size:16px; font-weight:600; margin:6px 0; }
     .status.available { color:#49d49d; font-weight:600; }
     .status.sold { color:#ff6b6b; font-weight:600; }
 
-    /* Galleries with visible scrollbar */
+    /* Galleries */
+    .gallery-wrap { position:relative; }
     .gallery {
-      display:flex; gap:10px; overflow-x:auto; padding:8px 0;
+      display:flex; gap:10px; overflow-x:scroll; overflow-y:hidden; padding:8px 0;
       -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;        /* Firefox */
-      scrollbar-color: #6aa2ff #14182a;
+      scrollbar-width:auto; scrollbar-color:#6aa2ff #14182a;
     }
-    .gallery::-webkit-scrollbar {
-      height: 8px;                  /* scrollbar thickness */
+    .gallery::-webkit-scrollbar { height:10px; }
+    .gallery::-webkit-scrollbar-track { background:#14182a; border-radius:4px; }
+    .gallery::-webkit-scrollbar-thumb { background:#6aa2ff; border-radius:4px; }
+    .gallery iframe { width:180px; height:140px; border:none; border-radius:8px; flex-shrink:0; background:#000; }
+
+    /* Gallery arrows */
+    .arrow {
+      position:absolute; top:50%; transform:translateY(-50%);
+      background:rgba(0,0,0,0.6); color:#fff;
+      border:none; border-radius:50%; width:32px; height:32px;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; z-index:5;
     }
-    .gallery::-webkit-scrollbar-track {
-      background: #14182a;          /* scrollbar background */
-      border-radius: 4px;
-    }
-    .gallery::-webkit-scrollbar-thumb {
-      background: #6aa2ff;          /* scrollbar color */
-      border-radius: 4px;
-    }
-    .gallery iframe {
-      width:180px; height:140px; border:none; border-radius:8px;
-      flex-shrink:0; background:#000;
-    }
+    .arrow.left { left:-6px; }
+    .arrow.right { right:-6px; }
 
     /* Debug */
-    .status-box {
-      background:#222; color:#eee; padding:8px; margin-top:12px;
-      font-family:monospace; white-space:pre-wrap; border-radius:8px; font-size:12px;
-    }
+    .status-box { background:#222; color:#eee; padding:8px; margin-top:12px;
+      font-family:monospace; white-space:pre-wrap; border-radius:8px; font-size:12px; }
     #toggleStatus {
       margin-top:10px; padding:6px 10px; font-size:12px;
       border:none; border-radius:6px; background:#444; color:#fff; cursor:pointer;
@@ -98,8 +79,9 @@
 <body>
   <div class="wrap">
     <div class="note">
-      📌 Best viewed on a <strong>laptop/desktop</strong>.<br/>
-      On mobile: to view photos and videos properly, click on the image → swipe up inside it → select “Allow Cookies” → then refresh the page.
+      💻 Best viewed on a <strong>laptop/desktop</strong>.<br/>
+      📱 On mobile: use the scroll bar under photos/videos or tap arrow buttons to scroll.<br/>
+      If media doesn’t load, tap an image → swipe up inside → select “Allow Cookies” → refresh the page.
     </div>
 
     <div class="banner">
@@ -148,7 +130,6 @@
     const API_KEY  = "AIzaSyCyz2HH1Bdu-OIzitlpPSTZp_Zrn03GfTk";
     const SHEET_ID = "1cMh7HOpOfS9JfSNHiqUC_P945pJEHYp8eKzUoajKBJM";
     const RANGE    = encodeURIComponent("Form Responses 1");
-
     const SEARCH_COLUMNS = [3,4];
     const CATEGORY_COL = 2;
     const STATUS_COL = 9;
@@ -205,7 +186,6 @@
 
         const card=document.createElement("div");
         card.className="card";
-
         card.innerHTML=`
           <h2>${itemName}</h2>
           <div class="meta">${r[2]||""} • Model: ${model} • Qty: ${r[5]||""}</div>
@@ -215,26 +195,11 @@
 
         // Photos
         if(r[6]){
-          const photos=document.createElement("div");
-          photos.className="gallery";
-          r[6].split(",").forEach(u=>{
-            const f=document.createElement("iframe");
-            f.src=toDrivePreview(u.trim());
-            photos.appendChild(f);
-          });
-          card.appendChild(photos);
+          card.appendChild(makeGallery(r[6].split(","), "photo"));
         }
-
         // Videos
         if(r[7]){
-          const videos=document.createElement("div");
-          videos.className="gallery";
-          r[7].split(",").forEach(u=>{
-            const f=document.createElement("iframe");
-            f.src=toDrivePreview(u.trim()); f.allow="autoplay";
-            videos.appendChild(f);
-          });
-          card.appendChild(videos);
+          card.appendChild(makeGallery(r[7].split(","), "video"));
         }
 
         // WhatsApp button
@@ -249,6 +214,24 @@
 
         el.cards.appendChild(card);
       });
+    }
+
+    function makeGallery(urls, type){
+      const wrap=document.createElement("div"); wrap.className="gallery-wrap";
+      const gal=document.createElement("div"); gal.className="gallery";
+      urls.forEach(u=>{
+        const f=document.createElement("iframe");
+        f.src=toDrivePreview(u.trim());
+        f.allow= type==="video"?"autoplay":"";
+        gal.appendChild(f);
+      });
+      wrap.appendChild(gal);
+      const left=document.createElement("button"); left.className="arrow left"; left.innerHTML="◀";
+      const right=document.createElement("button"); right.className="arrow right"; right.innerHTML="▶";
+      left.onclick=()=>{ gal.scrollBy({left:-200, behavior:"smooth"}); };
+      right.onclick=()=>{ gal.scrollBy({left:200, behavior:"smooth"}); };
+      wrap.appendChild(left); wrap.appendChild(right);
+      return wrap;
     }
 
     function toDrivePreview(url){
