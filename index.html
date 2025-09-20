@@ -33,7 +33,7 @@
     }
     .btn{ padding:10px 16px; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
     .btn.primary{ background:#6aa2ff; color:#000; font-weight:600; }
-    .btn.whatsapp{ background:#25D366; color:#fff; width:100%; text-align:center; margin-top:8px; }
+    .btn.whatsapp{ background:#25D366; color:#fff; margin-top:6px; display:inline-block; }
 
     /* Cards */
     .card { background:#14182a; border:1px solid #333; border-radius:10px;
@@ -49,23 +49,23 @@
     .gallery {
       display:flex; gap:10px; overflow-x:scroll; overflow-y:hidden; padding:8px 0;
       -webkit-overflow-scrolling: touch;
-      scrollbar-width:auto; scrollbar-color:#6aa2ff #14182a;
+      scrollbar-width:auto; scrollbar-color:#ffd966 #000;
     }
-    .gallery::-webkit-scrollbar { height:10px; }
-    .gallery::-webkit-scrollbar-track { background:#14182a; border-radius:4px; }
-    .gallery::-webkit-scrollbar-thumb { background:#6aa2ff; border-radius:4px; }
+    .gallery::-webkit-scrollbar { height:14px; }
+    .gallery::-webkit-scrollbar-track { background:#000; border-radius:8px; }
+    .gallery::-webkit-scrollbar-thumb { background:#ffd966; border-radius:8px; }
     .gallery iframe { width:180px; height:140px; border:none; border-radius:8px; flex-shrink:0; background:#000; }
 
     /* Gallery arrows */
     .arrow {
       position:absolute; top:50%; transform:translateY(-50%);
-      background:rgba(0,0,0,0.6); color:#fff;
-      border:none; border-radius:50%; width:32px; height:32px;
+      background:rgba(0,0,0,0.7); color:#ffd966;
+      border:none; border-radius:50%; width:36px; height:36px;
       display:flex; align-items:center; justify-content:center;
-      cursor:pointer; z-index:5;
+      cursor:pointer; z-index:5; font-size:16px;
     }
-    .arrow.left { left:-6px; }
-    .arrow.right { right:-6px; }
+    .arrow.left { left:-8px; }
+    .arrow.right { right:-8px; }
 
     /* Debug */
     .status-box { background:#222; color:#eee; padding:8px; margin-top:12px;
@@ -126,7 +126,6 @@
   </div>
 
   <script>
-    // ===== CONFIG =====
     const API_KEY  = "AIzaSyCyz2HH1Bdu-OIzitlpPSTZp_Zrn03GfTk";
     const SHEET_ID = "1cMh7HOpOfS9JfSNHiqUC_P945pJEHYp8eKzUoajKBJM";
     const RANGE    = encodeURIComponent("Form Responses 1");
@@ -193,16 +192,7 @@
           <div class="status ${isAvailable?"available":"sold"}">${isAvailable?"Available":"Sold"}</div>
         `;
 
-        // Photos
-        if(r[6]){
-          card.appendChild(makeGallery(r[6].split(","), "photo"));
-        }
-        // Videos
-        if(r[7]){
-          card.appendChild(makeGallery(r[7].split(","), "video"));
-        }
-
-        // WhatsApp button
+        // WhatsApp button (near details)
         if(isAvailable){
           const btn=document.createElement("a");
           btn.className="btn whatsapp";
@@ -211,6 +201,11 @@
           btn.textContent="Contact on WhatsApp";
           card.appendChild(btn);
         }
+
+        // Photos
+        if(r[6]) card.appendChild(makeGallery(r[6].split(","), "photo"));
+        // Videos
+        if(r[7]) card.appendChild(makeGallery(r[7].split(","), "video"));
 
         el.cards.appendChild(card);
       });
