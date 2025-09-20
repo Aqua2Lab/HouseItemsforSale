@@ -3,33 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Inventory Search</title>
+  <title>Household Sale</title>
   <style>
     body { margin:0; font-family:system-ui; background:#0f1220; color:#e8ecff; }
-    .wrap{ max-width:1100px; margin:auto; padding:12px; }
+    .wrap{ max-width:900px; margin:auto; padding:12px; }
     h1{ font-size:20px; margin:12px 0; text-align:center; }
     .banner {
       background:#ff6b6b; color:#fff; padding:12px; text-align:center;
       border-radius:8px; font-weight:600; margin-bottom:16px; font-size:14px;
     }
+
+    /* Controls */
     .controls { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
     .search input, .filter select {
       padding:10px; border-radius:6px; border:1px solid #444; background:#121626; color:#fff; font-size:14px;
     }
-    .btn{ padding:8px 14px; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
+    .btn{ padding:10px 16px; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
     .btn.primary{ background:#6aa2ff; color:#000; font-weight:600; }
-    .btn.whatsapp{ background:#25D366; color:#fff; display:inline-block; margin-top:4px; }
-    table{ width:100%; border-collapse:collapse; margin-top:12px; font-size:14px; }
-    th,td{ padding:8px; border-bottom:1px solid #333; text-align:left; vertical-align:top; }
-    tr.media-row td { background:#14182a; }
+    .btn.whatsapp{ background:#25D366; color:#fff; width:100%; text-align:center; margin-top:8px; }
+
+    /* Cards */
+    .card {
+      background:#14182a; border:1px solid #333; border-radius:10px;
+      padding:12px; margin-bottom:16px;
+    }
+    .card h2 { margin:0 0 6px; font-size:16px; }
+    .meta { font-size:13px; color:#aaa; margin-bottom:8px; }
+    .price { font-size:16px; font-weight:600; margin:6px 0; }
+    .status.available { color:#49d49d; font-weight:600; }
+    .status.sold { color:#ff6b6b; font-weight:600; }
+
+    /* Galleries */
     .gallery {
-      display:flex; gap:10px; overflow-x:auto; padding:10px 0;
+      display:flex; gap:10px; overflow-x:auto; padding:8px 0;
       -webkit-overflow-scrolling: touch;
     }
     .gallery iframe {
-      width:160px; height:130px; border:none; border-radius:8px;
+      width:180px; height:140px; border:none; border-radius:8px;
       flex-shrink:0; background:#000;
     }
+
+    /* Debug */
     .status-box {
       background:#222; color:#eee; padding:8px; margin-top:12px;
       font-family:monospace; white-space:pre-wrap; border-radius:8px; font-size:12px;
@@ -37,17 +51,6 @@
     #toggleStatus {
       margin-top:10px; padding:6px 10px; font-size:12px;
       border:none; border-radius:6px; background:#444; color:#fff; cursor:pointer;
-    }
-    .available { color:#49d49d; font-weight:600; }
-    .sold { color:#ff6b6b; font-weight:600; }
-
-    /* Responsive tweaks */
-    @media(max-width:600px){
-      table, thead, tbody, th, td, tr { display:block; }
-      thead{ display:none; }
-      tr{ margin-bottom:12px; border:1px solid #333; border-radius:8px; padding:8px; }
-      td{ border:none !important; padding:6px 4px; }
-      td:before{ font-weight:bold; display:block; margin-bottom:2px; }
     }
   </style>
 </head>
@@ -58,7 +61,7 @@
       View at <strong>C-1004 Shanti Vihar</strong> after prior appointment: <strong>9811238852</strong>.
     </div>
 
-    <h1>Google Sheet Search</h1>
+    <h1>Household Items</h1>
 
     <div class="controls">
       <div class="search">
@@ -79,23 +82,9 @@
       </div>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Timestamp</th>
-          <th>Category</th>
-          <th>Item</th>
-          <th>Model</th>
-          <th>Qty</th>
-          <th>Price</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
+    <div id="cards"></div>
 
-    <!-- Debug / Connection details -->
+    <!-- Debug -->
     <button id="toggleStatus">Hide Debug Info</button>
     <div id="statusBox" class="status-box">Connecting…</div>
   </div>
@@ -106,7 +95,7 @@
     const SHEET_ID = "1cMh7HOpOfS9JfSNHiqUC_P945pJEHYp8eKzUoajKBJM";
     const RANGE    = encodeURIComponent("Form Responses 1");
 
-    const SEARCH_COLUMNS = [3,4]; // Item Name, Model Number
+    const SEARCH_COLUMNS = [3,4];
     const CATEGORY_COL = 2;
     const STATUS_COL = 9;
     const PHONE = "9811238852";
@@ -114,7 +103,7 @@
     const el = {
       search: document.getElementById("searchTerm"),
       btn: document.getElementById("searchBtn"),
-      tbody: document.getElementById("tbody"),
+      cards: document.getElementById("cards"),
       statusBox: document.getElementById("statusBox"),
       toggleStatus: document.getElementById("toggleStatus"),
       filter: document.getElementById("statusFilter"),
@@ -124,23 +113,18 @@
     let allRows = [];
 
     function showStatus(msg, type="info") {
-      let icon = "ℹ️";
-      if(type==="success") icon = "✅";
-      if(type==="error") icon = "❌";
-      if(type==="warning") icon = "⚠️";
+      let icon = "ℹ️"; if(type==="success") icon="✅"; if(type==="error") icon="❌"; if(type==="warning") icon="⚠️";
       el.statusBox.textContent = `${icon} ${msg}`;
     }
 
     async function loadSheet(){
-      showStatus("⏳ Connecting to Google Sheets…");
+      showStatus("⏳ Connecting…");
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
       try {
         const res = await fetch(url);
         const json = await res.json();
-
-        if(res.status !== 200){ showStatus(`❌ Connection failed: ${json.error?.message}`, "error"); return; }
+        if(res.status !== 200){ showStatus(`❌ Failed: ${json.error?.message}`, "error"); return; }
         if(!json.values || json.values.length <= 1){ showStatus("⚠️ No records found.", "warning"); return; }
-
         allRows = json.values.slice(1);
         populateCategoryDropdown(allRows);
         runSearch();
@@ -149,106 +133,88 @@
     }
 
     function populateCategoryDropdown(rows){
-      const categories = [...new Set(rows.map(r=>(r[CATEGORY_COL]||"").trim()).filter(Boolean))];
-      el.categoryFilter.innerHTML = `<option value="all" selected>All Categories</option>`;
-      categories.forEach(cat=>{
-        const opt = document.createElement("option");
-        opt.value = cat.toLowerCase();
-        opt.textContent = cat;
+      const cats = [...new Set(rows.map(r=>(r[CATEGORY_COL]||"").trim()).filter(Boolean))];
+      el.categoryFilter.innerHTML = `<option value="all">All Categories</option>`;
+      cats.forEach(c=>{
+        const opt=document.createElement("option");
+        opt.value=c.toLowerCase(); opt.textContent=c;
         el.categoryFilter.appendChild(opt);
       });
     }
 
     function render(rows){
-      el.tbody.innerHTML = "";
+      el.cards.innerHTML="";
       rows.forEach(r=>{
-        const statusVal = (r[STATUS_COL]||"").toLowerCase().trim();
-        const isAvailable = statusVal === "yes";
+        const statusVal=(r[STATUS_COL]||"").toLowerCase().trim();
+        const isAvailable=statusVal==="yes";
+        const itemName=r[3]||""; const model=r[4]||""; const price=r[8]||"";
 
-        const itemName = r[3]||"";
-        const model = r[4]||"";
-        const price = r[8]||"";
+        const card=document.createElement("div");
+        card.className="card";
 
-        // Row 1: details
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${r[0]||""}</td>
-          <td>${r[2]||""}</td>
-          <td>${itemName}</td>
-          <td>${model}</td>
-          <td>${r[5]||""}</td>
-          <td>${price}</td>
-          <td class="${isAvailable ? "available" : "sold"}">${isAvailable ? "Available" : "Sold"}</td>
-          <td>
-            ${isAvailable ? `<a class="btn whatsapp" target="_blank"
-               href="https://wa.me/91${PHONE}?text=${encodeURIComponent(`I am interested in this product: ${itemName} (Model: ${model}, Price: ${price})`)}">
-               WhatsApp
-            </a>` : ""}
-          </td>
+        card.innerHTML=`
+          <h2>${itemName}</h2>
+          <div class="meta">${r[2]||""} • Model: ${model} • Qty: ${r[5]||""}</div>
+          <div class="price">₹${price}</div>
+          <div class="status ${isAvailable?"available":"sold"}">${isAvailable?"Available":"Sold"}</div>
         `;
 
-        // Row 2: Photos
+        // Photos
         if(r[6]){
-          const photoRow = document.createElement("tr");
-          photoRow.className="media-row";
-          const photoTd=document.createElement("td");
-          photoTd.colSpan=8;
-          const gallery=document.createElement("div");
-          gallery.className="gallery";
-          r[6].split(",").forEach(url=>{
-            const iframe=document.createElement("iframe");
-            iframe.src=toDrivePreview(url.trim());
-            gallery.appendChild(iframe);
+          const photos=document.createElement("div");
+          photos.className="gallery";
+          r[6].split(",").forEach(u=>{
+            const f=document.createElement("iframe");
+            f.src=toDrivePreview(u.trim());
+            photos.appendChild(f);
           });
-          photoTd.appendChild(gallery);
-          photoRow.appendChild(photoTd);
-          el.tbody.appendChild(photoRow);
+          card.appendChild(photos);
         }
 
-        // Row 3: Videos
+        // Videos
         if(r[7]){
-          const videoRow = document.createElement("tr");
-          videoRow.className="media-row";
-          const videoTd=document.createElement("td");
-          videoTd.colSpan=8;
-          const gallery=document.createElement("div");
-          gallery.className="gallery";
-          r[7].split(",").forEach(url=>{
-            const iframe=document.createElement("iframe");
-            iframe.src=toDrivePreview(url.trim());
-            iframe.allow="autoplay";
-            gallery.appendChild(iframe);
+          const videos=document.createElement("div");
+          videos.className="gallery";
+          r[7].split(",").forEach(u=>{
+            const f=document.createElement("iframe");
+            f.src=toDrivePreview(u.trim()); f.allow="autoplay";
+            videos.appendChild(f);
           });
-          videoTd.appendChild(gallery);
-          videoRow.appendChild(videoTd);
-          el.tbody.appendChild(videoRow);
+          card.appendChild(videos);
         }
 
-        el.tbody.appendChild(tr);
+        // WhatsApp button
+        if(isAvailable){
+          const btn=document.createElement("a");
+          btn.className="btn whatsapp";
+          btn.href=`https://wa.me/91${PHONE}?text=${encodeURIComponent(`I am interested in this product: ${itemName} (Model: ${model}, Price: ${price})`)}`;
+          btn.target="_blank";
+          btn.textContent="Contact on WhatsApp";
+          card.appendChild(btn);
+        }
+
+        el.cards.appendChild(card);
       });
     }
 
     function toDrivePreview(url){
       if(!url) return "";
-      const match = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
-      if(match && match[1]) return `https://drive.google.com/file/d/${match[1]}/preview`;
-      return url;
+      const m=url.match(/\/d\/([^/]+)/)||url.match(/id=([^&]+)/);
+      return m && m[1]?`https://drive.google.com/file/d/${m[1]}/preview`:url;
     }
 
     function runSearch(){
       const q=(el.search.value||"").toLowerCase().trim();
-      const filter=el.filter.value;
-      const categoryFilter=el.categoryFilter.value;
+      const f=el.filter.value; const cat=el.categoryFilter.value;
       let filtered=allRows;
-
-      if(q){ filtered=filtered.filter(r=> SEARCH_COLUMNS.some(i=> (r[i]||"").toLowerCase().includes(q))); }
+      if(q){ filtered=filtered.filter(r=>SEARCH_COLUMNS.some(i=>(r[i]||"").toLowerCase().includes(q))); }
       filtered=filtered.filter(r=>{
-        const statusVal=(r[STATUS_COL]||"").toLowerCase().trim();
-        if(filter==="available") return statusVal==="yes";
-        if(filter==="sold") return statusVal!=="yes";
+        const st=(r[STATUS_COL]||"").toLowerCase().trim();
+        if(f==="available") return st==="yes";
+        if(f==="sold") return st!=="yes";
         return true;
       });
-      if(categoryFilter!=="all"){ filtered=filtered.filter(r=>(r[CATEGORY_COL]||"").toLowerCase().trim()===categoryFilter); }
+      if(cat!=="all"){ filtered=filtered.filter(r=>(r[CATEGORY_COL]||"").toLowerCase().trim()===cat); }
       render(filtered);
     }
 
