@@ -6,46 +6,56 @@
   <title>Inventory Search</title>
   <style>
     body { margin:0; font-family:system-ui; background:#0f1220; color:#e8ecff; }
-    .wrap{ max-width:1100px; margin:auto; padding:20px; }
-    h1{ font-size:22px; margin:12px 0; text-align:center; }
+    .wrap{ max-width:1100px; margin:auto; padding:12px; }
+    h1{ font-size:20px; margin:12px 0; text-align:center; }
     .banner {
       background:#ff6b6b; color:#fff; padding:12px; text-align:center;
-      border-radius:8px; font-weight:600; margin-bottom:20px;
+      border-radius:8px; font-weight:600; margin-bottom:16px; font-size:14px;
     }
-    .controls { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+    .controls { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
     .search input, .filter select {
-      padding:10px; border-radius:8px; border:1px solid #444; background:#121626; color:#fff;
+      padding:10px; border-radius:6px; border:1px solid #444; background:#121626; color:#fff; font-size:14px;
     }
     .btn{ padding:8px 14px; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
     .btn.primary{ background:#6aa2ff; color:#000; font-weight:600; }
-    .btn.whatsapp{ background:#25D366; color:#fff; }
-    table{ width:100%; border-collapse:collapse; margin-top:16px; }
-    th,td{ padding:10px; border-bottom:1px solid #333; text-align:left; vertical-align:top; }
+    .btn.whatsapp{ background:#25D366; color:#fff; display:inline-block; margin-top:4px; }
+    table{ width:100%; border-collapse:collapse; margin-top:12px; font-size:14px; }
+    th,td{ padding:8px; border-bottom:1px solid #333; text-align:left; vertical-align:top; }
     tr.media-row td { background:#14182a; }
     .gallery {
       display:flex; gap:10px; overflow-x:auto; padding:10px 0;
+      -webkit-overflow-scrolling: touch;
     }
     .gallery iframe {
-      width:180px; height:150px; border:none; border-radius:8px;
+      width:160px; height:130px; border:none; border-radius:8px;
       flex-shrink:0; background:#000;
     }
     .status-box {
-      background:#222; color:#eee; padding:10px; margin-top:20px;
-      font-family:monospace; white-space:pre-wrap; border-radius:8px;
+      background:#222; color:#eee; padding:8px; margin-top:12px;
+      font-family:monospace; white-space:pre-wrap; border-radius:8px; font-size:12px;
     }
     #toggleStatus {
-      margin-top:10px; padding:6px 12px; font-size:14px;
+      margin-top:10px; padding:6px 10px; font-size:12px;
       border:none; border-radius:6px; background:#444; color:#fff; cursor:pointer;
     }
     .available { color:#49d49d; font-weight:600; }
     .sold { color:#ff6b6b; font-weight:600; }
+
+    /* Responsive tweaks */
+    @media(max-width:600px){
+      table, thead, tbody, th, td, tr { display:block; }
+      thead{ display:none; }
+      tr{ margin-bottom:12px; border:1px solid #333; border-radius:8px; padding:8px; }
+      td{ border:none !important; padding:6px 4px; }
+      td:before{ font-weight:bold; display:block; margin-bottom:2px; }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="banner">
       Desperate sale of household items to be cleared by end of September due to moving out of country.<br/>
-      All items are available for view at <strong>C-1004 Shanti Vihar</strong> and can be inspected only after prior appointment by calling <strong>9811238852</strong>.
+      View at <strong>C-1004 Shanti Vihar</strong> after prior appointment: <strong>9811238852</strong>.
     </div>
 
     <h1>Google Sheet Search</h1>
@@ -56,7 +66,6 @@
         <button id="searchBtn" class="btn primary">Search</button>
       </div>
       <div class="filter">
-        <label for="statusFilter">Show: </label>
         <select id="statusFilter">
           <option value="available" selected>Available Only</option>
           <option value="sold">Sold Only</option>
@@ -64,7 +73,6 @@
         </select>
       </div>
       <div class="filter">
-        <label for="categoryFilter">Category: </label>
         <select id="categoryFilter">
           <option value="all" selected>All Categories</option>
         </select>
@@ -75,9 +83,8 @@
       <thead>
         <tr>
           <th>Timestamp</th>
-          <th>Email</th>
           <th>Category</th>
-          <th>Item Name</th>
+          <th>Item</th>
           <th>Model</th>
           <th>Qty</th>
           <th>Price</th>
@@ -100,8 +107,8 @@
     const RANGE    = encodeURIComponent("Form Responses 1");
 
     const SEARCH_COLUMNS = [3,4]; // Item Name, Model Number
-    const CATEGORY_COL = 2; // Category column index
-    const STATUS_COL = 9;   // "Available in" column index
+    const CATEGORY_COL = 2;
+    const STATUS_COL = 9;
     const PHONE = "9811238852";
 
     const el = {
@@ -131,24 +138,14 @@
         const res = await fetch(url);
         const json = await res.json();
 
-        if(res.status !== 200){
-          showStatus(`Connection failed (Status: ${res.status}) - ${json.error?.message || "Unknown error"}`, "error");
-          return;
-        }
-
-        if(!json.values || json.values.length <= 1){
-          showStatus("Connected but no records found in sheet.", "warning");
-          return;
-        }
+        if(res.status !== 200){ showStatus(`❌ Connection failed: ${json.error?.message}`, "error"); return; }
+        if(!json.values || json.values.length <= 1){ showStatus("⚠️ No records found.", "warning"); return; }
 
         allRows = json.values.slice(1);
         populateCategoryDropdown(allRows);
         runSearch();
-
-        showStatus(`Connected! Records fetched: ${allRows.length}`, "success");
-      } catch(err){
-        showStatus("Error loading sheet:\n" + err.message, "error");
-      }
+        showStatus(`✅ Connected! Records: ${allRows.length}`, "success");
+      } catch(err){ showStatus("❌ Error: "+err.message, "error"); }
     }
 
     function populateCategoryDropdown(rows){
@@ -172,11 +169,10 @@
         const model = r[4]||"";
         const price = r[8]||"";
 
-        // Row 1: item details
+        // Row 1: details
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${r[0]||""}</td>
-          <td>${r[1]||""}</td>
           <td>${r[2]||""}</td>
           <td>${itemName}</td>
           <td>${model}</td>
@@ -184,55 +180,58 @@
           <td>${price}</td>
           <td class="${isAvailable ? "available" : "sold"}">${isAvailable ? "Available" : "Sold"}</td>
           <td>
-            <a class="btn whatsapp" target="_blank"
+            ${isAvailable ? `<a class="btn whatsapp" target="_blank"
                href="https://wa.me/91${PHONE}?text=${encodeURIComponent(`I am interested in this product: ${itemName} (Model: ${model}, Price: ${price})`)}">
                WhatsApp
-            </a>
+            </a>` : ""}
           </td>
         `;
 
-        // Row 2: media
-        const mediaRow = document.createElement("tr");
-        mediaRow.className = "media-row";
-        const mediaTd = document.createElement("td");
-        mediaTd.colSpan = 9; // span full width
-
-        const gallery = document.createElement("div");
-        gallery.className = "gallery";
-
-        // Photos
+        // Row 2: Photos
         if(r[6]){
+          const photoRow = document.createElement("tr");
+          photoRow.className="media-row";
+          const photoTd=document.createElement("td");
+          photoTd.colSpan=8;
+          const gallery=document.createElement("div");
+          gallery.className="gallery";
           r[6].split(",").forEach(url=>{
             const iframe=document.createElement("iframe");
             iframe.src=toDrivePreview(url.trim());
             gallery.appendChild(iframe);
           });
+          photoTd.appendChild(gallery);
+          photoRow.appendChild(photoTd);
+          el.tbody.appendChild(photoRow);
         }
 
-        // Videos
+        // Row 3: Videos
         if(r[7]){
+          const videoRow = document.createElement("tr");
+          videoRow.className="media-row";
+          const videoTd=document.createElement("td");
+          videoTd.colSpan=8;
+          const gallery=document.createElement("div");
+          gallery.className="gallery";
           r[7].split(",").forEach(url=>{
             const iframe=document.createElement("iframe");
             iframe.src=toDrivePreview(url.trim());
             iframe.allow="autoplay";
             gallery.appendChild(iframe);
           });
+          videoTd.appendChild(gallery);
+          videoRow.appendChild(videoTd);
+          el.tbody.appendChild(videoRow);
         }
 
-        mediaTd.appendChild(gallery);
-        mediaRow.appendChild(mediaTd);
-
         el.tbody.appendChild(tr);
-        el.tbody.appendChild(mediaRow);
       });
     }
 
     function toDrivePreview(url){
       if(!url) return "";
       const match = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
-      if(match && match[1]){
-        return `https://drive.google.com/file/d/${match[1]}/preview`;
-      }
+      if(match && match[1]) return `https://drive.google.com/file/d/${match[1]}/preview`;
       return url;
     }
 
@@ -240,46 +239,27 @@
       const q=(el.search.value||"").toLowerCase().trim();
       const filter=el.filter.value;
       const categoryFilter=el.categoryFilter.value;
-
       let filtered=allRows;
 
-      if(q){
-        filtered=filtered.filter(r=>
-          SEARCH_COLUMNS.some(i=> (r[i]||"").toLowerCase().includes(q))
-        );
-      }
-
-      // availability filter
+      if(q){ filtered=filtered.filter(r=> SEARCH_COLUMNS.some(i=> (r[i]||"").toLowerCase().includes(q))); }
       filtered=filtered.filter(r=>{
-        const statusVal = (r[STATUS_COL]||"").toLowerCase().trim();
+        const statusVal=(r[STATUS_COL]||"").toLowerCase().trim();
         if(filter==="available") return statusVal==="yes";
         if(filter==="sold") return statusVal!=="yes";
         return true;
       });
-
-      // category filter
-      if(categoryFilter!=="all"){
-        filtered=filtered.filter(r=>(r[CATEGORY_COL]||"").toLowerCase().trim()===categoryFilter);
-      }
-
+      if(categoryFilter!=="all"){ filtered=filtered.filter(r=>(r[CATEGORY_COL]||"").toLowerCase().trim()===categoryFilter); }
       render(filtered);
     }
 
     el.btn.addEventListener("click", runSearch);
-    el.search.addEventListener("keydown", e=>{
-      if(e.key==="Enter"){ e.preventDefault(); runSearch(); }
-    });
+    el.search.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); runSearch(); } });
     el.filter.addEventListener("change", runSearch);
     el.categoryFilter.addEventListener("change", runSearch);
 
     el.toggleStatus.addEventListener("click", ()=>{
-      if(el.statusBox.style.display==="none"){
-        el.statusBox.style.display="block";
-        el.toggleStatus.textContent="Hide Debug Info";
-      } else {
-        el.statusBox.style.display="none";
-        el.toggleStatus.textContent="Show Debug Info";
-      }
+      if(el.statusBox.style.display==="none"){ el.statusBox.style.display="block"; el.toggleStatus.textContent="Hide Debug Info"; }
+      else{ el.statusBox.style.display="none"; el.toggleStatus.textContent="Show Debug Info"; }
     });
 
     loadSheet();
