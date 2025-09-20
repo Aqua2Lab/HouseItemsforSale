@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Inventory Search</title>
+  <style>
+    body { margin:0; font-family:system-ui; background:#0f1220; color:#e8ecff; }
+    .wrap{ max-width:1100px; margin:auto; padding:20px; }
+    h1{ font-size:22px; margin:12px 0; text-align:center; }
+    .banner {
+      background:#ff6b6b; color:#fff; padding:12px; text-align:center;
+      border-radius:8px; font-weight:600; margin-bottom:20px;
+    }
+    .controls { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+    .search input, .filter select {
+      padding:10px; border-radius:8px; border:1px solid #444; background:#121626; color:#fff;
+    }
+    .btn{ padding:8px 14px; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
+    .btn.primary{ background:#6aa2ff; color:#000; font-weight:600; }
+    .btn.whatsapp{ background:#25D366; color:#fff; }
+    table{ width:100%; border-collapse:collapse; margin-top:16px; }
+    th,td{ padding:10px; border-bottom:1px solid #333; text-align:left; vertical-align:top; }
+    tr.media-row td { background:#14182a; }
+    .gallery {
+      display:flex; gap:10px; overflow-x:auto; padding:10px 0;
+    }
+    .gallery iframe {
+      width:180px; height:150px; border:none; border-radius:8px;
+      flex-shrink:0; background:#000;
+    }
+    .status-box {
+      background:#222; color:#eee; padding:10px; margin-top:20px;
+      font-family:monospace; white-space:pre-wrap; border-radius:8px;
+    }
+    #toggleStatus {
+      margin-top:10px; padding:6px 12px; font-size:14px;
+      border:none; border-radius:6px; background:#444; color:#fff; cursor:pointer;
+    }
+    .available { color:#49d49d; font-weight:600; }
+    .sold { color:#ff6b6b; font-weight:600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="banner">
+      Desperate sale of household items to be cleared by end of September due to moving out of country.<br/>
+      All items are available for view at <strong>C-1004 Shanti Vihar</strong> and can be inspected only after prior appointment by calling <strong>9811238852</strong>.
+    </div>
+
+    <h1>Google Sheet Search</h1>
+
+    <div class="controls">
+      <div class="search">
+        <input id="searchTerm" type="search" placeholder="Search by Item or Model…" />
+        <button id="searchBtn" class="btn primary">Search</button>
+      </div>
+      <div class="filter">
+        <label for="statusFilter">Show: </label>
+        <select id="statusFilter">
+          <option value="available" selected>Available Only</option>
+          <option value="sold">Sold Only</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+      <div class="filter">
+        <label for="categoryFilter">Category: </label>
+        <select id="categoryFilter">
+          <option value="all" selected>All Categories</option>
+        </select>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Email</th>
+          <th>Category</th>
+          <th>Item Name</th>
+          <th>Model</th>
+          <th>Qty</th>
+          <th>Price</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+
+    <!-- Debug / Connection details -->
+    <button id="toggleStatus">Hide Debug Info</button>
+    <div id="statusBox" class="status-box">Connecting…</div>
+  </div>
+
+  <script>
+    // ===== CONFIG =====
+    const API_KEY  = "AIzaSyCyz2HH1Bdu-OIzitlpPSTZp_Zrn03GfTk";
+    const SHEET_ID = "1cMh7HOpOfS9JfSNHiqUC_P945pJEHYp8eKzUoajKBJM";
+    const RANGE    = encodeURIComponent("Form Responses 1");
+
+    const SEARCH_COLUMNS = [3,4]; // Item Name, Model Number
+    const CATEGORY_COL = 2; // Category column index
+    const STATUS_COL = 9;   // "Available in" column index
+    const PHONE = "9811238852";
+
+    const el = {
+      search: document.getElementById("searchTerm"),
+      btn: document.getElementById("searchBtn"),
+      tbody: document.getElementById("tbody"),
+      statusBox: document.getElementById("statusBox"),
+      toggleStatus: document.getElementById("toggleStatus"),
+      filter: document.getElementById("statusFilter"),
+      categoryFilter: document.getElementById("categoryFilter"),
+    };
+
+    let allRows = [];
+
+    function showStatus(msg, type="info") {
+      let icon = "ℹ️";
+      if(type==="success") icon = "✅";
+      if(type==="error") icon = "❌";
+      if(type==="warning") icon = "⚠️";
+      el.statusBox.textContent = `${icon} ${msg}`;
+    }
+
+    async function loadSheet(){
+      showStatus("⏳ Connecting to Google Sheets…");
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+
+        if(res.status !== 200){
+          showStatus(`Connection failed (Status: ${res.status}) - ${json.error?.message || "Unknown error"}`, "error");
+          return;
+        }
+
+        if(!json.values || json.values.length <= 1){
+          showStatus("Connected but no records found in sheet.", "warning");
+          return;
+        }
+
+        allRows = json.values.slice(1);
+        populateCategoryDropdown(allRows);
+        runSearch();
+
+        showStatus(`Connected! Records fetched: ${allRows.length}`, "success");
+      } catch(err){
+        showStatus("Error loading sheet:\n" + err.message, "error");
+      }
+    }
+
+    function populateCategoryDropdown(rows){
+      const categories = [...new Set(rows.map(r=>(r[CATEGORY_COL]||"").trim()).filter(Boolean))];
+      el.categoryFilter.innerHTML = `<option value="all" selected>All Categories</option>`;
+      categories.forEach(cat=>{
+        const opt = document.createElement("option");
+        opt.value = cat.toLowerCase();
+        opt.textContent = cat;
+        el.categoryFilter.appendChild(opt);
+      });
+    }
+
+    function render(rows){
+      el.tbody.innerHTML = "";
+      rows.forEach(r=>{
+        const statusVal = (r[STATUS_COL]||"").toLowerCase().trim();
+        const isAvailable = statusVal === "yes";
+
+        const itemName = r[3]||"";
+        const model = r[4]||"";
+        const price = r[8]||"";
+
+        // Row 1: item details
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r[0]||""}</td>
+          <td>${r[1]||""}</td>
+          <td>${r[2]||""}</td>
+          <td>${itemName}</td>
+          <td>${model}</td>
+          <td>${r[5]||""}</td>
+          <td>${price}</td>
+          <td class="${isAvailable ? "available" : "sold"}">${isAvailable ? "Available" : "Sold"}</td>
+          <td>
+            <a class="btn whatsapp" target="_blank"
+               href="https://wa.me/91${PHONE}?text=${encodeURIComponent(`I am interested in this product: ${itemName} (Model: ${model}, Price: ${price})`)}">
+               WhatsApp
+            </a>
+          </td>
+        `;
+
+        // Row 2: media
+        const mediaRow = document.createElement("tr");
+        mediaRow.className = "media-row";
+        const mediaTd = document.createElement("td");
+        mediaTd.colSpan = 9; // span full width
+
+        const gallery = document.createElement("div");
+        gallery.className = "gallery";
+
+        // Photos
+        if(r[6]){
+          r[6].split(",").forEach(url=>{
+            const iframe=document.createElement("iframe");
+            iframe.src=toDrivePreview(url.trim());
+            gallery.appendChild(iframe);
+          });
+        }
+
+        // Videos
+        if(r[7]){
+          r[7].split(",").forEach(url=>{
+            const iframe=document.createElement("iframe");
+            iframe.src=toDrivePreview(url.trim());
+            iframe.allow="autoplay";
+            gallery.appendChild(iframe);
+          });
+        }
+
+        mediaTd.appendChild(gallery);
+        mediaRow.appendChild(mediaTd);
+
+        el.tbody.appendChild(tr);
+        el.tbody.appendChild(mediaRow);
+      });
+    }
+
+    function toDrivePreview(url){
+      if(!url) return "";
+      const match = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
+      if(match && match[1]){
+        return `https://drive.google.com/file/d/${match[1]}/preview`;
+      }
+      return url;
+    }
+
+    function runSearch(){
+      const q=(el.search.value||"").toLowerCase().trim();
+      const filter=el.filter.value;
+      const categoryFilter=el.categoryFilter.value;
+
+      let filtered=allRows;
+
+      if(q){
+        filtered=filtered.filter(r=>
+          SEARCH_COLUMNS.some(i=> (r[i]||"").toLowerCase().includes(q))
+        );
+      }
+
+      // availability filter
+      filtered=filtered.filter(r=>{
+        const statusVal = (r[STATUS_COL]||"").toLowerCase().trim();
+        if(filter==="available") return statusVal==="yes";
+        if(filter==="sold") return statusVal!=="yes";
+        return true;
+      });
+
+      // category filter
+      if(categoryFilter!=="all"){
+        filtered=filtered.filter(r=>(r[CATEGORY_COL]||"").toLowerCase().trim()===categoryFilter);
+      }
+
+      render(filtered);
+    }
+
+    el.btn.addEventListener("click", runSearch);
+    el.search.addEventListener("keydown", e=>{
+      if(e.key==="Enter"){ e.preventDefault(); runSearch(); }
+    });
+    el.filter.addEventListener("change", runSearch);
+    el.categoryFilter.addEventListener("change", runSearch);
+
+    el.toggleStatus.addEventListener("click", ()=>{
+      if(el.statusBox.style.display==="none"){
+        el.statusBox.style.display="block";
+        el.toggleStatus.textContent="Hide Debug Info";
+      } else {
+        el.statusBox.style.display="none";
+        el.toggleStatus.textContent="Show Debug Info";
+      }
+    });
+
+    loadSheet();
+  </script>
+</body>
+</html>
