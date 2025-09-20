@@ -8,7 +8,7 @@
     body {
       margin:0; font-family:system-ui, Arial, sans-serif;
       background:#0f1220; color:#e8ecff;
-      overflow-y:scroll; /* force vertical scrollbar */
+      overflow-y:scroll;
     }
 
     /* Global vertical scrollbar */
@@ -28,14 +28,19 @@
 
     /* Urgent Banner */
     .banner {
-      background: linear-gradient(135deg, #ff4d4d, #cc0000);
+      background: linear-gradient(135deg, #ff1a1a, #990000);
       color: #fff; text-align: center;
       padding: 20px 14px; border-radius: 12px;
       margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.35);
     }
-    .banner h2 { margin:0 0 10px; font-size:22px; font-weight:800; text-transform:uppercase; letter-spacing:1px; }
+    .banner h2 { margin:0 0 12px; font-size:22px; font-weight:800; text-transform:uppercase; letter-spacing:1px; }
     .banner p { margin:8px 0; font-size:15px; line-height:1.5; }
     .banner strong { color: #ffd966; }
+    .btn.telegram {
+      background:#0088cc; color:#fff; font-weight:600;
+      text-decoration:none; padding:10px 18px;
+      border-radius:8px; display:inline-block; margin-top:6px;
+    }
 
     /* Controls */
     .controls { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
@@ -49,7 +54,7 @@
     /* Cards */
     .card { background:#14182a; border:1px solid #333; border-radius:10px;
       padding:12px; margin-bottom:16px; }
-    .card-header { display:flex; justify-content:space-between; align-items:center; }
+    .card-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
     .card h2 { margin:0; font-size:16px; }
     .meta { font-size:13px; color:#aaa; margin:6px 0; }
     .price { font-size:16px; font-weight:600; margin:6px 0; }
@@ -96,16 +101,21 @@
       If media doesn’t load, tap an image → swipe up inside → select “Allow Cookies” → refresh the page.
     </div>
 
-    <div class="banner">
-      <h2>🚨 Urgent Household Sale – Everything Must Go!</h2>
+    <div class="banner" id="saleBanner">
+      <h2>🚨 Desperate Sale from C-1004 Shanti Vihar</h2>
       <p>
-        I am <strong>leaving the country</strong> and require 
-        <strong>immediate disposal</strong> of all items.<br/>
-        Clearance by <strong>end of September</strong> – act fast!
+        I am <strong>leaving the country</strong> and this is a 
+        <strong>forced clearance sale</strong>.<br/>
+        <span style="color:#ffd966; font-weight:700;">
+          All items must be sold within the next few days!
+        </span>
       </p>
+      <p id="itemStats">📦 Loading item stats…</p>
       <p>
-        Items can be inspected at <strong>C-1004 Shanti Vihar</strong><br/>
-        (Visit strictly by prior appointment – Call <strong>9811238852</strong>)
+        Join our Telegram group for live updates: <br/>
+        <a href="https://t.me/+3jHzpjSWDXZhNjZl" target="_blank" class="btn telegram">
+          👉 Join Telegram Group
+        </a>
       </p>
     </div>
 
@@ -173,9 +183,18 @@
         if(!json.values || json.values.length <= 1){ showStatus("⚠️ No records found.", "warning"); return; }
         allRows = json.values.slice(1);
         populateCategoryDropdown(allRows);
+        updateBannerStats(allRows);
         runSearch();
         showStatus(`✅ Connected! Records: ${allRows.length}`, "success");
       } catch(err){ showStatus("❌ Error: "+err.message, "error"); }
+    }
+
+    function updateBannerStats(rows){
+      let total = rows.length;
+      let available = rows.filter(r=>(r[STATUS_COL]||"").toLowerCase().trim()==="yes").length;
+      let sold = total - available;
+      document.getElementById("itemStats").innerHTML =
+        `✅ Available: <strong>${available}</strong> | ❌ Sold: <strong>${sold}</strong> | Total: ${total}`;
     }
 
     function populateCategoryDropdown(rows){
