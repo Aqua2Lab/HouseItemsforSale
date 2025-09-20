@@ -8,10 +8,12 @@
     body { margin:0; font-family:system-ui; background:#0f1220; color:#e8ecff; }
     .wrap{ max-width:900px; margin:auto; padding:12px; }
     h1{ font-size:20px; margin:12px 0; text-align:center; }
-    .banner {
-      background:#ff6b6b; color:#fff; padding:12px; text-align:center;
-      border-radius:8px; font-weight:600; margin-bottom:16px; font-size:14px;
+    .banner, .note, .error {
+      border-radius:8px; padding:12px; margin-bottom:16px; font-size:14px;
     }
+    .banner { background:#ff6b6b; color:#fff; font-weight:600; text-align:center; }
+    .note { background:#222; color:#ffd27f; text-align:center; font-weight:500; }
+    .error { background:#ff3333; color:#fff; text-align:center; font-weight:700; font-size:18px; display:none; }
 
     /* Controls */
     .controls { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
@@ -38,9 +40,9 @@
       display:flex; gap:10px; overflow-x:auto; padding:8px 0;
       -webkit-overflow-scrolling: touch;
     }
-    .gallery img, .gallery video {
-      width:180px; height:140px; border-radius:8px;
-      flex-shrink:0; object-fit:cover; background:#000;
+    .gallery iframe {
+      width:180px; height:140px; border:none; border-radius:8px;
+      flex-shrink:0; background:#000;
     }
 
     /* Debug */
@@ -56,6 +58,11 @@
 </head>
 <body>
   <div class="wrap">
+    <div id="cookieError" class="error">
+      ⚠️ Cookies not enabled! <br/>
+      To view photos & videos: click on any image → swipe up → allow cookies → then refresh this page.
+    </div>
+
     <div class="banner">
       Desperate sale of household items to be cleared by end of September due to moving out of country.<br/>
       View at <strong>C-1004 Shanti Vihar</strong> after prior appointment: <strong>9811238852</strong>.
@@ -108,6 +115,7 @@
       toggleStatus: document.getElementById("toggleStatus"),
       filter: document.getElementById("statusFilter"),
       categoryFilter: document.getElementById("categoryFilter"),
+      cookieError: document.getElementById("cookieError"),
     };
 
     let allRows = [];
@@ -164,9 +172,10 @@
           const photos=document.createElement("div");
           photos.className="gallery";
           r[6].split(",").forEach(u=>{
-            const img=document.createElement("img");
-            img.src=toDriveDirect(u.trim());
-            photos.appendChild(img);
+            const f=document.createElement("iframe");
+            f.src=toDrivePreview(u.trim());
+            f.onerror=()=>showCookieError(); // detect blocked
+            photos.appendChild(f);
           });
           card.appendChild(photos);
         }
@@ -176,10 +185,10 @@
           const videos=document.createElement("div");
           videos.className="gallery";
           r[7].split(",").forEach(u=>{
-            const vid=document.createElement("video");
-            vid.controls=true;
-            vid.src=toDriveDirect(u.trim());
-            videos.appendChild(vid);
+            const f=document.createElement("iframe");
+            f.src=toDrivePreview(u.trim()); f.allow="autoplay";
+            f.onerror=()=>showCookieError();
+            videos.appendChild(f);
           });
           card.appendChild(videos);
         }
@@ -198,10 +207,14 @@
       });
     }
 
-    function toDriveDirect(url){
+    function showCookieError(){
+      el.cookieError.style.display="block";
+    }
+
+    function toDrivePreview(url){
       if(!url) return "";
       const m=url.match(/\/d\/([^/]+)/)||url.match(/id=([^&]+)/);
-      return m && m[1]?`https://drive.google.com/uc?id=${m[1]}`:url;
+      return m && m[1]?`https://drive.google.com/file/d/${m[1]}/preview`:url;
     }
 
     function runSearch(){
