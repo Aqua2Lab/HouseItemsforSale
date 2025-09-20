@@ -5,7 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Household Sale</title>
   <style>
-    body { margin:0; font-family:system-ui, Arial, sans-serif; background:#0f1220; color:#e8ecff; }
+    body {
+      margin:0; font-family:system-ui, Arial, sans-serif;
+      background:#0f1220; color:#e8ecff;
+      overflow-y:scroll; /* force vertical scrollbar */
+    }
+
+    /* Global vertical scrollbar */
+    body::-webkit-scrollbar { width:14px; }
+    body::-webkit-scrollbar-track { background:#000; }
+    body::-webkit-scrollbar-thumb { background:#ffd966; border-radius:8px; }
+    body { scrollbar-width:auto; scrollbar-color:#ffd966 #000; }
+
     .wrap{ max-width:900px; margin:auto; padding:12px; }
     h1{ font-size:20px; margin:12px 0; text-align:center; }
 
@@ -31,27 +42,28 @@
     .search input, .filter select {
       padding:10px; border-radius:6px; border:1px solid #444; background:#121626; color:#fff; font-size:14px;
     }
-    .btn{ padding:10px 16px; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
+    .btn{ padding:8px 14px; border:none; border-radius:6px; cursor:pointer; font-size:13px; }
     .btn.primary{ background:#6aa2ff; color:#000; font-weight:600; }
-    .btn.whatsapp{ background:#25D366; color:#fff; margin-top:6px; display:inline-block; }
+    .btn.whatsapp{ background:#25D366; color:#fff; margin-left:10px; white-space:nowrap; }
 
     /* Cards */
     .card { background:#14182a; border:1px solid #333; border-radius:10px;
       padding:12px; margin-bottom:16px; }
-    .card h2 { margin:0 0 6px; font-size:16px; }
-    .meta { font-size:13px; color:#aaa; margin-bottom:8px; }
+    .card-header { display:flex; justify-content:space-between; align-items:center; }
+    .card h2 { margin:0; font-size:16px; }
+    .meta { font-size:13px; color:#aaa; margin:6px 0; }
     .price { font-size:16px; font-weight:600; margin:6px 0; }
     .status.available { color:#49d49d; font-weight:600; }
     .status.sold { color:#ff6b6b; font-weight:600; }
 
     /* Galleries */
-    .gallery-wrap { position:relative; }
+    .gallery-wrap { position:relative; margin-top:8px; }
     .gallery {
       display:flex; gap:10px; overflow-x:scroll; overflow-y:hidden; padding:8px 0;
       -webkit-overflow-scrolling: touch;
       scrollbar-width:auto; scrollbar-color:#ffd966 #000;
     }
-    .gallery::-webkit-scrollbar { height:14px; }
+    .gallery::-webkit-scrollbar { height:12px; }
     .gallery::-webkit-scrollbar-track { background:#000; border-radius:8px; }
     .gallery::-webkit-scrollbar-thumb { background:#ffd966; border-radius:8px; }
     .gallery iframe { width:180px; height:140px; border:none; border-radius:8px; flex-shrink:0; background:#000; }
@@ -60,12 +72,12 @@
     .arrow {
       position:absolute; top:50%; transform:translateY(-50%);
       background:rgba(0,0,0,0.7); color:#ffd966;
-      border:none; border-radius:50%; width:36px; height:36px;
+      border:none; border-radius:50%; width:32px; height:32px;
       display:flex; align-items:center; justify-content:center;
       cursor:pointer; z-index:5; font-size:16px;
     }
-    .arrow.left { left:-8px; }
-    .arrow.right { right:-8px; }
+    .arrow.left { left:-6px; }
+    .arrow.right { right:-6px; }
 
     /* Debug */
     .status-box { background:#222; color:#eee; padding:8px; margin-top:12px;
@@ -185,22 +197,27 @@
 
         const card=document.createElement("div");
         card.className="card";
-        card.innerHTML=`
-          <h2>${itemName}</h2>
-          <div class="meta">${r[2]||""} • Model: ${model} • Qty: ${r[5]||""}</div>
-          <div class="price">₹${price}</div>
-          <div class="status ${isAvailable?"available":"sold"}">${isAvailable?"Available":"Sold"}</div>
-        `;
 
-        // WhatsApp button (near details)
+        // Header row: product name + WhatsApp button (if available)
+        const header=document.createElement("div");
+        header.className="card-header";
+        header.innerHTML=`<h2>${itemName}</h2>`;
         if(isAvailable){
           const btn=document.createElement("a");
           btn.className="btn whatsapp";
           btn.href=`https://wa.me/91${PHONE}?text=${encodeURIComponent(`I am interested in this product: ${itemName} (Model: ${model}, Price: ${price})`)}`;
           btn.target="_blank";
-          btn.textContent="Contact on WhatsApp";
-          card.appendChild(btn);
+          btn.textContent="WhatsApp";
+          header.appendChild(btn);
         }
+        card.appendChild(header);
+
+        // Other details
+        card.innerHTML+=`
+          <div class="meta">${r[2]||""} • Model: ${model} • Qty: ${r[5]||""}</div>
+          <div class="price">₹${price}</div>
+          <div class="status ${isAvailable?"available":"sold"}">${isAvailable?"Available":"Sold"}</div>
+        `;
 
         // Photos
         if(r[6]) card.appendChild(makeGallery(r[6].split(","), "photo"));
