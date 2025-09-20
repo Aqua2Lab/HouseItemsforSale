@@ -38,9 +38,9 @@
       display:flex; gap:10px; overflow-x:auto; padding:8px 0;
       -webkit-overflow-scrolling: touch;
     }
-    .gallery iframe {
-      width:180px; height:140px; border:none; border-radius:8px;
-      flex-shrink:0; background:#000;
+    .gallery img, .gallery video {
+      width:180px; height:140px; border-radius:8px;
+      flex-shrink:0; object-fit:cover; background:#000;
     }
 
     /* Debug */
@@ -164,9 +164,9 @@
           const photos=document.createElement("div");
           photos.className="gallery";
           r[6].split(",").forEach(u=>{
-            const f=document.createElement("iframe");
-            f.src=toDrivePreview(u.trim());
-            photos.appendChild(f);
+            const img=document.createElement("img");
+            img.src=toDriveDirect(u.trim());
+            photos.appendChild(img);
           });
           card.appendChild(photos);
         }
@@ -176,9 +176,10 @@
           const videos=document.createElement("div");
           videos.className="gallery";
           r[7].split(",").forEach(u=>{
-            const f=document.createElement("iframe");
-            f.src=toDrivePreview(u.trim()); f.allow="autoplay";
-            videos.appendChild(f);
+            const vid=document.createElement("video");
+            vid.controls=true;
+            vid.src=toDriveDirect(u.trim());
+            videos.appendChild(vid);
           });
           card.appendChild(videos);
         }
@@ -197,10 +198,10 @@
       });
     }
 
-    function toDrivePreview(url){
+    function toDriveDirect(url){
       if(!url) return "";
       const m=url.match(/\/d\/([^/]+)/)||url.match(/id=([^&]+)/);
-      return m && m[1]?`https://drive.google.com/file/d/${m[1]}/preview`:url;
+      return m && m[1]?`https://drive.google.com/uc?id=${m[1]}`:url;
     }
 
     function runSearch(){
