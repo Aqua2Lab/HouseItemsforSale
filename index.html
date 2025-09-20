@@ -8,12 +8,11 @@
     body { margin:0; font-family:system-ui; background:#0f1220; color:#e8ecff; }
     .wrap{ max-width:900px; margin:auto; padding:12px; }
     h1{ font-size:20px; margin:12px 0; text-align:center; }
-    .banner, .note, .error {
+    .banner, .note {
       border-radius:8px; padding:12px; margin-bottom:16px; font-size:14px;
     }
     .banner { background:#ff6b6b; color:#fff; font-weight:600; text-align:center; }
     .note { background:#222; color:#ffd27f; text-align:center; font-weight:500; }
-    .error { background:#ff3333; color:#fff; text-align:center; font-weight:700; font-size:18px; display:none; }
 
     /* Controls */
     .controls { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
@@ -58,9 +57,9 @@
 </head>
 <body>
   <div class="wrap">
-    <div id="cookieError" class="error">
-      ⚠️ Cookies not enabled! <br/>
-      To view photos & videos: click on any image → swipe up → allow cookies → then refresh this page.
+    <div class="note">
+      📌 To view photos and videos on mobile: <br/>
+      Click on the image → swipe up inside it → select “Allow Cookies” → then refresh the page.
     </div>
 
     <div class="banner">
@@ -115,7 +114,6 @@
       toggleStatus: document.getElementById("toggleStatus"),
       filter: document.getElementById("statusFilter"),
       categoryFilter: document.getElementById("categoryFilter"),
-      cookieError: document.getElementById("cookieError"),
     };
 
     let allRows = [];
@@ -174,7 +172,6 @@
           r[6].split(",").forEach(u=>{
             const f=document.createElement("iframe");
             f.src=toDrivePreview(u.trim());
-            f.onerror=()=>showCookieError(); // detect blocked
             photos.appendChild(f);
           });
           card.appendChild(photos);
@@ -187,7 +184,6 @@
           r[7].split(",").forEach(u=>{
             const f=document.createElement("iframe");
             f.src=toDrivePreview(u.trim()); f.allow="autoplay";
-            f.onerror=()=>showCookieError();
             videos.appendChild(f);
           });
           card.appendChild(videos);
@@ -205,10 +201,6 @@
 
         el.cards.appendChild(card);
       });
-    }
-
-    function showCookieError(){
-      el.cookieError.style.display="block";
     }
 
     function toDrivePreview(url){
