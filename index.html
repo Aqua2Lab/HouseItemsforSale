@@ -20,26 +20,50 @@
     .wrap{ max-width:900px; margin:auto; padding:12px; }
     h1{ font-size:20px; margin:12px 0; text-align:center; }
 
-    /* Top note */
-    .note {
-      background:#222; color:#ffd27f; text-align:center;
-      font-weight:500; padding:10px; border-radius:8px; margin-bottom:14px; font-size:14px;
-    }
-
-    /* Urgent Banner */
+    /* Compact modern Banner */
     .banner {
-      background: linear-gradient(135deg, #ff1a1a, #990000);
-      color: #fff; text-align: center;
-      padding: 20px 14px; border-radius: 12px;
-      margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.35);
+      background: linear-gradient(90deg, #b30000, #660000);
+      color: #fff;
+      text-align: center;
+      padding: 16px 12px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
     }
-    .banner h2 { margin:0 0 12px; font-size:22px; font-weight:800; text-transform:uppercase; letter-spacing:1px; }
-    .banner p { margin:8px 0; font-size:15px; line-height:1.5; }
-    .banner strong { color: #ffd966; }
+    .banner h2 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .banner .tagline {
+      margin: 4px 0;
+      font-size: 14px;
+      color: #ffd966;
+      font-weight: 500;
+    }
+    .banner .cta {
+      margin: 6px 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .whatsapp-tag {
+      background:#25D366;
+      color:#fff;
+      padding:2px 6px;
+      border-radius:4px;
+      font-size:13px;
+    }
+    #itemStats {
+      margin: 6px 0;
+      font-size: 13px;
+      font-weight: 500;
+    }
     .btn.telegram {
       background:#0088cc; color:#fff; font-weight:600;
-      text-decoration:none; padding:10px 18px;
-      border-radius:8px; display:inline-block; margin-top:6px;
+      text-decoration:none; padding:8px 14px;
+      border-radius:6px; display:inline-block;
+      font-size:13px; margin-top:4px;
     }
 
     /* Controls */
@@ -95,28 +119,18 @@
 </head>
 <body>
   <div class="wrap">
-    <div class="note">
-      💻 Best viewed on a <strong>laptop/desktop</strong>.<br/>
-      📱 On mobile: use the scroll bar under photos/videos or tap arrow buttons to scroll.<br/>
-      If media doesn’t load, tap an image → swipe up inside → select “Allow Cookies” → refresh the page.
-    </div>
 
+    <!-- Compact Banner -->
     <div class="banner" id="saleBanner">
-      <h2>🚨 Desperate Sale from C-1004 Shanti Vihar</h2>
-      <p>
-        I am <strong>leaving the country</strong> and this is a 
-        <strong>forced clearance sale</strong>.<br/>
-        <span style="color:#ffd966; font-weight:700;">
-          All items must be sold within the next few days!
-        </span>
+      <h2>🚨 Desperate Sale – C-1004 Shanti Vihar</h2>
+      <p class="tagline">Leaving the country – all items must go in the next few days.</p>
+      <p class="cta">
+        💬 To show interest, click the <span class="whatsapp-tag">WhatsApp</span> button next to each product.
       </p>
       <p id="itemStats">📦 Loading item stats…</p>
-      <p>
-        Join our Telegram group for live updates: <br/>
-        <a href="https://t.me/+3jHzpjSWDXZhNjZl" target="_blank" class="btn telegram">
-          👉 Join Telegram Group
-        </a>
-      </p>
+      <a href="https://t.me/+3jHzpjSWDXZhNjZl" target="_blank" class="btn telegram">
+        👉 Join Telegram Group for Updates
+      </a>
     </div>
 
     <h1>Available Items</h1>
