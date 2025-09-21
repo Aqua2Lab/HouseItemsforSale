@@ -10,8 +10,6 @@
       background:#0f1220; color:#e8ecff;
       overflow-y:scroll;
     }
-
-    /* Global vertical scrollbar */
     body::-webkit-scrollbar { width:14px; }
     body::-webkit-scrollbar-track { background:#000; }
     body::-webkit-scrollbar-thumb { background:#ffd966; border-radius:8px; }
@@ -20,45 +18,20 @@
     .wrap{ max-width:900px; margin:auto; padding:12px; }
     h1{ font-size:20px; margin:12px 0; text-align:center; }
 
-    /* Compact modern Banner */
+    /* Compact Banner */
     .banner {
       background: linear-gradient(90deg, #b30000, #660000);
-      color: #fff;
-      text-align: center;
-      padding: 16px 12px;
-      border-radius: 10px;
-      margin-bottom: 18px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+      color: #fff; text-align: center;
+      padding: 16px 12px; border-radius: 10px;
+      margin-bottom: 18px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
-    .banner h2 {
-      margin: 0 0 6px;
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-    }
-    .banner .tagline {
-      margin: 4px 0;
-      font-size: 14px;
-      color: #ffd966;
-      font-weight: 500;
-    }
-    .banner .cta {
-      margin: 6px 0;
-      font-size: 14px;
-      font-weight: 600;
-    }
+    .banner h2 { margin:0 0 6px; font-size:20px; font-weight:800; }
+    .banner .tagline { margin:4px 0; font-size:14px; color:#ffd966; }
+    .banner .cta { margin:6px 0; font-size:14px; font-weight:600; }
     .whatsapp-tag {
-      background:#25D366;
-      color:#fff;
-      padding:2px 6px;
-      border-radius:4px;
-      font-size:13px;
+      background:#25D366; color:#fff; padding:2px 6px; border-radius:4px; font-size:13px;
     }
-    #itemStats {
-      margin: 6px 0;
-      font-size: 13px;
-      font-weight: 500;
-    }
+    #itemStats { margin:6px 0; font-size:13px; font-weight:500; }
     .btn.telegram {
       background:#0088cc; color:#fff; font-weight:600;
       text-decoration:none; padding:8px 14px;
@@ -77,7 +50,10 @@
 
     /* Cards */
     .card { background:#14182a; border:1px solid #333; border-radius:10px;
-      padding:12px; margin-bottom:16px; }
+      padding:12px; margin-bottom:16px;
+      transition: transform 0.2s ease;
+    }
+    .card:hover { transform:scale(1.01); }
     .card-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
     .card h2 { margin:0; font-size:16px; }
     .meta { font-size:13px; color:#aaa; margin:6px 0; }
@@ -88,29 +64,29 @@
     /* Galleries */
     .gallery-wrap { position:relative; margin-top:8px; }
     .gallery {
-      display:flex; gap:10px; overflow-x:scroll; overflow-y:hidden; padding:8px 0;
+      display:flex; gap:10px; overflow-x:auto; padding:8px 0;
       -webkit-overflow-scrolling: touch;
-      scrollbar-width:auto; scrollbar-color:#ffd966 #000;
     }
     .gallery::-webkit-scrollbar { height:12px; }
     .gallery::-webkit-scrollbar-track { background:#000; border-radius:8px; }
     .gallery::-webkit-scrollbar-thumb { background:#ffd966; border-radius:8px; }
-    .gallery iframe { width:180px; height:140px; border:none; border-radius:8px; flex-shrink:0; background:#000; }
+    .gallery iframe { width:180px; height:140px; border:none; border-radius:8px; flex-shrink:0; background:#000; opacity:0.6; }
 
-    /* Gallery arrows */
+    /* Arrows */
     .arrow {
       position:absolute; top:50%; transform:translateY(-50%);
-      background:rgba(0,0,0,0.7); color:#ffd966;
-      border:none; border-radius:50%; width:32px; height:32px;
+      background:rgba(0,0,0,0.5); color:#ffd966;
+      border:none; border-radius:50%; width:28px; height:28px;
       display:flex; align-items:center; justify-content:center;
-      cursor:pointer; z-index:5; font-size:16px;
+      cursor:pointer; z-index:5; font-size:14px;
     }
     .arrow.left { left:-6px; }
     .arrow.right { right:-6px; }
 
     /* Debug */
     .status-box { background:#222; color:#eee; padding:8px; margin-top:12px;
-      font-family:monospace; white-space:pre-wrap; border-radius:8px; font-size:12px; }
+      font-family:monospace; white-space:pre-wrap; border-radius:8px; font-size:12px; display:none;
+    }
     #toggleStatus {
       margin-top:10px; padding:6px 10px; font-size:12px;
       border:none; border-radius:6px; background:#444; color:#fff; cursor:pointer;
@@ -119,8 +95,7 @@
 </head>
 <body>
   <div class="wrap">
-
-    <!-- Compact Banner -->
+    <!-- Banner -->
     <div class="banner" id="saleBanner">
       <h2>🚨 Desperate Sale – C-1004 Shanti Vihar</h2>
       <p class="tagline">Leaving the country – all items must go in the next few days.</p>
@@ -157,7 +132,7 @@
     <div id="cards"></div>
 
     <!-- Debug -->
-    <button id="toggleStatus">Hide Debug Info</button>
+    <button id="toggleStatus">Show Debug Info</button>
     <div id="statusBox" class="status-box">Connecting…</div>
   </div>
 
@@ -181,6 +156,8 @@
     };
 
     let allRows = [];
+    let filtered = [];
+    let page=0, PAGE_SIZE=12;
 
     function showStatus(msg, type="info") {
       let icon = "ℹ️"; if(type==="success") icon="✅"; if(type==="error") icon="❌"; if(type==="warning") icon="⚠️";
@@ -221,44 +198,37 @@
       });
     }
 
-    function render(rows){
-      el.cards.innerHTML="";
-      rows.forEach(r=>{
-        const statusVal=(r[STATUS_COL]||"").toLowerCase().trim();
-        const isAvailable=statusVal==="yes";
-        const itemName=r[3]||""; const model=r[4]||""; const price=r[8]||"";
+    function renderCard(r){
+      const statusVal=(r[STATUS_COL]||"").toLowerCase().trim();
+      const isAvailable=statusVal==="yes";
+      const itemName=r[3]||""; const model=r[4]||""; const price=r[8]||"";
 
-        const card=document.createElement("div");
-        card.className="card";
+      const card=document.createElement("div");
+      card.className="card";
 
-        // Header row: product name + WhatsApp button (if available)
-        const header=document.createElement("div");
-        header.className="card-header";
-        header.innerHTML=`<h2>${itemName}</h2>`;
-        if(isAvailable){
-          const btn=document.createElement("a");
-          btn.className="btn whatsapp";
-          btn.href=`https://wa.me/91${PHONE}?text=${encodeURIComponent(`I am interested in this product: ${itemName} (Model: ${model}, Price: ${price})`)}`;
-          btn.target="_blank";
-          btn.textContent="WhatsApp";
-          header.appendChild(btn);
-        }
-        card.appendChild(header);
+      const header=document.createElement("div");
+      header.className="card-header";
+      header.innerHTML=`<h2>${itemName}</h2>`;
+      if(isAvailable){
+        const btn=document.createElement("a");
+        btn.className="btn whatsapp";
+        btn.href=`https://wa.me/91${PHONE}?text=${encodeURIComponent(`I am interested in this product: ${itemName} (Model: ${model}, Price: ${price})`)}`;
+        btn.target="_blank";
+        btn.textContent="WhatsApp";
+        header.appendChild(btn);
+      }
+      card.appendChild(header);
 
-        // Other details
-        card.innerHTML+=`
-          <div class="meta">${r[2]||""} • Model: ${model} • Qty: ${r[5]||""}</div>
-          <div class="price">₹${price}</div>
-          <div class="status ${isAvailable?"available":"sold"}">${isAvailable?"Available":"Sold"}</div>
-        `;
+      card.innerHTML+=`
+        <div class="meta">${r[2]||""} • Model: ${model} • Qty: ${r[5]||""}</div>
+        <div class="price">₹${price}</div>
+        <div class="status ${isAvailable?"available":"sold"}">${isAvailable?"Available":"Sold"}</div>
+      `;
 
-        // Photos
-        if(r[6]) card.appendChild(makeGallery(r[6].split(","), "photo"));
-        // Videos
-        if(r[7]) card.appendChild(makeGallery(r[7].split(","), "video"));
+      if(r[6]) card.appendChild(makeGallery(r[6].split(","), "photo"));
+      if(r[7]) card.appendChild(makeGallery(r[7].split(","), "video"));
 
-        el.cards.appendChild(card);
-      });
+      el.cards.appendChild(card);
     }
 
     function makeGallery(urls, type){
@@ -266,9 +236,10 @@
       const gal=document.createElement("div"); gal.className="gallery";
       urls.forEach(u=>{
         const f=document.createElement("iframe");
-        f.src=toDrivePreview(u.trim());
-        f.allow= type==="video"?"autoplay":"";
+        f.dataset.src = toDrivePreview(u.trim());
+        f.loading="lazy"; // hint
         gal.appendChild(f);
+        lazyObserver.observe(f);
       });
       wrap.appendChild(gal);
       const left=document.createElement("button"); left.className="arrow left"; left.innerHTML="◀";
@@ -288,7 +259,7 @@
     function runSearch(){
       const q=(el.search.value||"").toLowerCase().trim();
       const f=el.filter.value; const cat=el.categoryFilter.value;
-      let filtered=allRows;
+      filtered=allRows;
       if(q){ filtered=filtered.filter(r=>SEARCH_COLUMNS.some(i=>(r[i]||"").toLowerCase().includes(q))); }
       filtered=filtered.filter(r=>{
         const st=(r[STATUS_COL]||"").toLowerCase().trim();
@@ -297,8 +268,39 @@
         return true;
       });
       if(cat!=="all"){ filtered=filtered.filter(r=>(r[CATEGORY_COL]||"").toLowerCase().trim()===cat); }
-      render(filtered);
+      el.cards.innerHTML=""; page=0;
+      renderPage();
     }
+
+    function renderPage(){
+      const start = page*PAGE_SIZE;
+      const end = start+PAGE_SIZE;
+      const slice = filtered.slice(start,end);
+      slice.forEach(r=>renderCard(r));
+      page++;
+    }
+
+    // Lazy loading observer
+    const lazyObserver = new IntersectionObserver(entries=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting){
+          const iframe=entry.target;
+          if(iframe.dataset.src){
+            iframe.src=iframe.dataset.src;
+            iframe.style.opacity=1;
+            delete iframe.dataset.src;
+            lazyObserver.unobserve(iframe);
+          }
+        }
+      });
+    }, {threshold:0.1});
+
+    // Infinite scroll
+    window.addEventListener("scroll", ()=>{
+      if(window.innerHeight+window.scrollY>=document.body.offsetHeight-200){
+        renderPage();
+      }
+    });
 
     el.btn.addEventListener("click", runSearch);
     el.search.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); runSearch(); } });
